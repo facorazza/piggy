@@ -6,6 +6,12 @@
 
 Piggy is an asynchronous Python library which helps managing Instagram accounts and facilitates their growth. It's easy to install and set up, and it doesn't need a browser to be executed.
 
+## Index
+- [Installation](#installation)
+- [Setup](#setup)
+- [Execution](#execution)
+- [Disclaimer](#disclaimer)
+
 ## Installation
 Piggy is easy to install. Fire up your terminal and copy these lines:
 ```
