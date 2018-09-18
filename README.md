@@ -41,5 +41,5 @@ python3 main.py
 ```
 
 ## Disclaimer
-This library is a powerful tool; do not abuse it. We can't be held responsible in the unfortunate event that your account gets soft-banned or banned or in any other scenario.
+This library is a powerful tool; do not abuse it. We can't be held responsible in the unfortunate event that your account gets soft-banned, banned or in any other scenario.
 🐷
