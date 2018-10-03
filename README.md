@@ -1,7 +1,7 @@
 # 🐷 P[Ig]*g*y
 
 [![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/Imperator26/piggy)
-![](https://img.shields.io/badge/Python-%E2%89%A5%203.4-yellow.svg)
+![](https://img.shields.io/badge/Python-%E2%89%A5%203.6-yellow.svg)
 ![](https://img.shields.io/badge/-asynchronous-blue.svg)
 
 Piggy is an asynchronous Python library which helps managing Instagram accounts and facilitates their growth. It's easy to install and set up, and it doesn't need a browser to be executed.
