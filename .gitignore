@@ -1,0 +1,11 @@
+# Ignore MacOS system files
+.DS_Store
+
+#Ignore python cache
+__pycache__
+
+# Ignore log files
+*.log
+
+# Ignore databases
+*.db
