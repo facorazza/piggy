@@ -9,3 +9,11 @@ __pycache__
 
 # Ignore databases
 *.db
+
+# Ignore backup files
+*.csv
+*.json
+
+# Ignore images
+*.jpg
+*.png
