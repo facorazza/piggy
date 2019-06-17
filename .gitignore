@@ -1,7 +1,7 @@
 # Ignore MacOS system files
 .DS_Store
 
-#Ignore python cache
+# Ignore python cache
 __pycache__
 
 # Ignore log files
@@ -16,3 +16,6 @@ backups/*
 # Ignore images
 *.jpg
 *.png
+
+# Ignore personal settings
+settings.json
