@@ -21,7 +21,7 @@ python3 setup.py install
 ```
 
 ## Setup
-Piggy's juiciest core is the `settings.json` file.
+Piggy's juiciest core is the `settings.json` file. Duplicate `settings.sample.json`and rename it in `settings.json`.
 Open it with your favourite text editor and add your Instagram `username` and `password`.
 ```
 {

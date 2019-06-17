@@ -1,7 +1,7 @@
 {
   "user":{
-    "username":"",  # It can be either your email or your username (your phone number should work as well)
-    "password":""
+    "username":"YOUR_EMAIL",  # It can be either your email or your username (your phone number should work as well)
+    "password":"YOUR_PASSWD"
   },
   "backup":{
     "every":"5m", # Take a backup of all active backups every 5 minutes. Available units: s-seconds, m-minutes, h-hours, d-days
