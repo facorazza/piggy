@@ -1,15 +1,15 @@
-# Modules
 import asyncio
+
 from piggy.piggy import Piggy
 
 
-# =================================== MAIN =====================================
+# =================================== MAIN ====================================
 async def main(pig):
     async for media in pig.feed():
         await pig.print(media)
-        #await pig.like(media)
-        #await pig.comment(media)
-        #await pig.follow(media)
+#       await pig.like(media)
+#       await pig.comment(media)
+#       await pig.follow(media)
         await pig.my()
 
 # ==============================================================================

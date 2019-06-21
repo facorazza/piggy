@@ -1,3 +1,9 @@
+import json
+import logging
+import aiofiles
+import regex
+
+
 def translate_custom_media_type_to_ig(media_types):
     translated_media_types = []
 
@@ -9,8 +15,9 @@ def translate_custom_media_type_to_ig(media_types):
         elif mt == "video":
             translated_media_types.append("GraphVideo")
         else:
-            print(mt)###
+            logging.warning(mt)
     return translated_media_types
+
 
 def translate_ig_media_type_to_custom(media_type):
     if media_type == "GraphImage":
@@ -22,11 +29,13 @@ def translate_ig_media_type_to_custom(media_type):
     else:
         raise (Exception, "Invalid media type: "+media_type)
 
+
 def cookies_dict(cookie_jar):
     cookies = dict()
     for cookie in cookie_jar:
         cookies[cookie.key] = cookie.value
     return cookies
+
 
 def interval_in_seconds(interval):
     exploded_interval = regex.findall(r"[0-9]+[a-z]", interval)
@@ -45,6 +54,7 @@ def interval_in_seconds(interval):
     else:
         raise ValueError(f"Invalid unit \"{unit}\".")
 
+
 async def to_csv(filename, header, rows):
     async with aiofiles.open(f"backups/{filename}.csv", mode="w") as f:
         text = ""
@@ -58,6 +68,7 @@ async def to_csv(filename, header, rows):
             text = f"{text[:-1]}\n"
 
         await f.write(text)
+
 
 async def to_json(filename, header, rows):
     list = []
