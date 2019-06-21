@@ -40,6 +40,13 @@ To run Piggy insert:
 python3 main.py
 ```
 
+## Contribute
+- Fork this repository;
+- Create a new branch in your forked repository and name it to something that describes the feature you want to work on;
+- Commit your changes to your newly created branch;
+- Make a Pull Request.
+
+
 ## Disclaimer
 This library is a powerful tool; do not abuse it. We can't be held responsible in the unfortunate event that your account gets soft-banned, banned or in any other similar scenario.
 🐷
