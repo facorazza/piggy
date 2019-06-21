@@ -1,3 +1,4 @@
+requests
 asyncio
 aiohttp
 aiosqlite
