@@ -36,6 +36,40 @@ class Piggy:
     def __init__(self):
         return
 
+    async def http_request(
+        self, method, url,
+        headers=None, params=None, data=None, response_type="text"
+    ):
+        if method == "GET":
+            r = await self.session.get(
+                url,
+                headers=headers,
+                params=params
+            )
+            logger.debug(f"[GET] {r.url}")
+        elif method == "POST":
+            r = await self.session.post(
+                url,
+                headers=headers,
+                data=data
+            )
+            logger.debug(f"[POST] {r.url}")
+        else:
+            raise ValueError(f"Invalid HTTP method: {method}")
+
+        logger.debug(f"Status code: {r.status} {r.reason}")
+
+        if response_type == "text":
+            res = await r.text()
+            logger.debug(res)
+            return res
+        elif response_type == "json":
+            res = await r.json()
+            logger.debug(res)
+            return res
+        else:
+            raise ValueError(f"Invalid response type: {response_type}")
+
     async def setup(self, settings_path="settings.json"):
         logger.info("Loading settings...")
 
@@ -73,16 +107,16 @@ class Piggy:
 
     async def _getCsrfTokenFromForm(self):
         # Get login page and find the csrf token
-        async with self.session.get(
+        res = await self.http_request(
+            "GET",
             "https://www.instagram.com/accounts/login/"
-        ) as r:
-            logger.debug(f"[GET] {r.url}")
-            assert r.status == 200, f"[{r.status}] - {r.reason}"
-            return regex.findall(
-                r"\"csrf_token\":\"(.*?)\"",
-                await r.text(),
-                flags=regex.MULTILINE
-            )[0]
+        )
+
+        return regex.findall(
+            r"\"csrf_token\":\"(.*?)\"",
+            res,
+            flags=regex.MULTILINE
+        )[0]
 
     async def login(self):
         payload = {
@@ -93,32 +127,31 @@ class Piggy:
             "User-Agent": self.settings["connection"]["user_agent"],
             "X-CSRFToken": self.csrf_token
         }
-        async with self.session.post(
+        res = await self.http_request(
+            "POST",
             "https://www.instagram.com/accounts/login/ajax/",
             headers=headers,
-            data=payload
-        ) as r:
-            logger.debug(f"[POST] {r.url}")
-            response = await r.json()
-            logger.debug(response)
+            data=payload,
+            response_type="json"
+        )
 
-        if response["authenticated"]:
+        if res["authenticated"]:
             logger.info("Logged in!")
-            self.id = response["userId"]
+            self.id = res["userId"]
 
-        elif response["message"] == "checkpoint_required":
+        elif res["message"] == "checkpoint_required":
             logger.info("Checkpoint required.")
 
-            async with self.session.post(
-                f"https://www.instagram.com{response['checkpoint_url']}",
+            res = await self.http_request(
+                "POST",
+                f"https://www.instagram.com{res['checkpoint_url']}",
                 headers=headers,
                 data=payload
-            ) as r:
-                logger.debug(f"[POST] {r.url}")
-                logger.error(r.text)
+            )
+            logger.error(res)
+
         else:
             logger.error("Couldn't log in.")
-            logger.info(response)
 
         cookies = utils.cookies_dict(self.session.cookie_jar)
         self.csrf_token = cookies["csrftoken"]
@@ -201,7 +234,7 @@ class Piggy:
         if username is None:
             id = self.id
         else:
-            user = await self.getUserByUsername(username)
+            user = await self.get_user_by_usernameUsername(username)
             id = user["graphql"]["user"]["id"]
 
         params = {
@@ -210,22 +243,21 @@ class Piggy:
         }
         has_next_page = True
         while has_next_page:
-            async with self.session.get(
+            res = await self.http_request(
+                "GET",
                 "https://www.instagram.com/graphql/query/",
-                params=params
-            ) as r:
-                logger.debug(f"[GET] {r.url}")
-                assert r.status == 200, f"[{r.status}] - {r.reason}"
-                response = await r.json()
+                params=params,
+                response_type="json"
+            )
 
-                has_next_page = response["data"]["user"]["edge_followed_by"]["page_info"]["has_next_page"]
-                end_cursor = response["data"]["user"]["edge_followed_by"]["page_info"]["end_cursor"]
-                params["variables"] = json.dumps(
-                    {"id": str(id), "first": 50, "after": end_cursor}
-                )
+            has_next_page = res["data"]["user"]["edge_followed_by"]["page_info"]["has_next_page"]
+            end_cursor = res["data"]["user"]["edge_followed_by"]["page_info"]["end_cursor"]
+            params["variables"] = json.dumps(
+                {"id": str(id), "first": 50, "after": end_cursor}
+            )
 
-                for user in response["data"]["user"]["edge_followed_by"]["edges"]:
-                    followers.append(user["node"]["username"])
+            for user in res["data"]["user"]["edge_followed_by"]["edges"]:
+                followers.append(user["node"]["username"])
         return followers
 
     async def following(self, username=None):
@@ -234,7 +266,7 @@ class Piggy:
         if username is None:
             id = self.id
         else:
-            user = await self.getUserByUsername(username)
+            user = await self.get_user_by_usernameUsername(username)
             id = user["graphql"]["user"]["id"]
 
         params = {
@@ -243,22 +275,21 @@ class Piggy:
         }
         has_next_page = True
         while has_next_page:
-            async with self.session.get(
+            res = await self.http_request(
+                "GET",
                 "https://www.instagram.com/graphql/query/",
-                params=params
-            ) as r:
-                logger.debug(f"[GET] {r.url}")
-                assert r.status == 200, f"[{r.status}] - {r.reason}"
-                response = await r.json()
+                params=params,
+                response_type="json"
+            )
 
-                has_next_page = response["data"]["user"]["edge_follow"]["page_info"]["has_next_page"]
-                end_cursor = response["data"]["user"]["edge_follow"]["page_info"]["end_cursor"]
-                params["variables"] = json.dumps(
-                    {"id": str(id), "first": 50, "after": end_cursor}
-                )
+            has_next_page = res["data"]["user"]["edge_follow"]["page_info"]["has_next_page"]
+            end_cursor = res["data"]["user"]["edge_follow"]["page_info"]["end_cursor"]
+            params["variables"] = json.dumps(
+                {"id": str(id), "first": 50, "after": end_cursor}
+            )
 
-                for user in response["data"]["user"]["edge_follow"]["edges"]:
-                    following.append(user["node"]["username"])
+            for user in res["data"]["user"]["edge_follow"]["edges"]:
+                following.append(user["node"]["username"])
         return following
 
     async def feed(self, explore=True, users=[], hashtags=[], locations=[]):
@@ -313,25 +344,24 @@ class Piggy:
         }
         has_next_page = True
         while has_next_page:
-            async with self.session.get(
+            res = await self.http_request(
+                "GET",
                 "https://www.instagram.com/graphql/query/",
-                params=params
-            ) as r:
-                logger.debug(f"[GET] {r.url}")
-                assert r.status == 200, f"[{r.status}] - {r.reason}"
-                response = await r.json()
+                params=params,
+                response_type="json"
+            )
 
-                has_next_page = response["data"]["user"]["edge_web_discover_media"]["page_info"]["has_next_page"]
-                end_cursor = response["data"]["user"]["edge_web_discover_media"]["page_info"]["end_cursor"]
-                params["variables"] = json.dumps(
-                    {"first": 50, "after": end_cursor}
-                )
+            has_next_page = res["data"]["user"]["edge_web_discover_media"]["page_info"]["has_next_page"]
+            end_cursor = res["data"]["user"]["edge_web_discover_media"]["page_info"]["end_cursor"]
+            params["variables"] = json.dumps(
+                {"first": 50, "after": end_cursor}
+            )
 
-                for media in response["data"]["user"]["edge_web_discover_media"]["edges"]:
-                    await q.put(media["node"])
+            for media in res["data"]["user"]["edge_web_discover_media"]["edges"]:
+                await q.put(media["node"])
 
     async def _user_feed(self, q, user):
-        user = await self.getUserByUsername(user)
+        user = await self.get_user_by_usernameUsername(user)
         id = user["id"]
 
         params = {
@@ -340,22 +370,21 @@ class Piggy:
         }
         has_next_page = True
         while has_next_page:
-            async with self.session.get(
+            res = await self.http_request(
+                "GET",
                 "https://www.instagram.com/graphql/query/",
-                params=params
-            ) as r:
-                logger.debug(f"[GET] {r.url}")
-                assert r.status == 200, f"[{r.status}] - {r.reason}"
-                response = await r.json()
+                params=params,
+                response_type="json"
+            )
 
-                has_next_page = response["data"]["user"]["edge_owner_to_timeline_media"]["page_info"]["has_next_page"]
-                end_cursor = response["data"]["user"]["edge_owner_to_timeline_media"]["page_info"]["end_cursor"]
-                params["variables"] = json.dumps(
-                    {"id": id, "first": 50, "after": end_cursor}
-                )
+            has_next_page = res["data"]["user"]["edge_owner_to_timeline_media"]["page_info"]["has_next_page"]
+            end_cursor = res["data"]["user"]["edge_owner_to_timeline_media"]["page_info"]["end_cursor"]
+            params["variables"] = json.dumps(
+                {"id": id, "first": 50, "after": end_cursor}
+            )
 
-                for media in response["data"]["user"]["edge_web_discover_media"]["edges"]:
-                    await q.put(media["node"])
+            for media in res["data"]["user"]["edge_web_discover_media"]["edges"]:
+                await q.put(media["node"])
 
     async def _hashtag_feed(self, q, hashtag):
         count = 0
@@ -365,24 +394,22 @@ class Piggy:
         }
         has_next_page = True
         while has_next_page:
-            async with self.session.get(
+            res = await self.http_request(
+                "GET",
                 "https://www.instagram.com/graphql/query/",
-                params=params
-            ) as r:
-                logger.debug(f"[GET] {r.url}")
-                assert r.status == 200, f"[{r.status}] - {r.reason}"
+                params=params,
+                response_type="json"
+            )
 
-                response = json.loads(await r.text())
+            has_next_page = res["data"]["hashtag"]["edge_hashtag_to_media"]["page_info"]["has_next_page"]
+            end_cursor = res["data"]["hashtag"]["edge_hashtag_to_media"]["page_info"]["end_cursor"]
+            count += 1
+            params["variables"] = json.dumps(
+                {"tag_name": hashtag, "first": count, "after": end_cursor}
+            )
 
-                has_next_page = response["data"]["hashtag"]["edge_hashtag_to_media"]["page_info"]["has_next_page"]
-                end_cursor = response["data"]["hashtag"]["edge_hashtag_to_media"]["page_info"]["end_cursor"]
-                count += 1
-                params["variables"] = json.dumps(
-                    {"tag_name": hashtag, "first": count, "after": end_cursor}
-                )
-
-                for media in response["data"]["hashtag"]["edge_hashtag_to_media"]["edges"]:
-                    await q.put(media["node"])
+            for media in res["data"]["hashtag"]["edge_hashtag_to_media"]["edges"]:
+                await q.put(media["node"])
 
     async def _location_feed(self, q, location_id):
         count = 0
@@ -392,28 +419,26 @@ class Piggy:
         }
         has_next_page = True
         while has_next_page:
-            async with self.session.get(
+            res = await self.http_request(
+                "GET",
                 "https://www.instagram.com/graphql/query/",
-                params=params
-            ) as r:
-                logger.debug(f"[GET] {r.url}")
-                assert r.status == 200, f"[{r.status}] - {r.reason}"
+                params=params,
+                response_type="json"
+            )
 
-                response = json.loads(await r.text())
+            has_next_page = res["data"]["location"]["edge_location_to_media"]["page_info"]["has_next_page"]
+            end_cursor = res["data"]["location"]["edge_location_to_media"]["page_info"]["end_cursor"]
+            count += 1
+            params["variables"] = json.dumps(
+                {
+                    "id": str(location_id),
+                    "first": 50,
+                    "after": str(end_cursor)
+                }
+            )
 
-                has_next_page = response["data"]["location"]["edge_location_to_media"]["page_info"]["has_next_page"]
-                end_cursor = response["data"]["location"]["edge_location_to_media"]["page_info"]["end_cursor"]
-                count += 1
-                params["variables"] = json.dumps(
-                    {
-                        "id": str(location_id),
-                        "first": 50,
-                        "after": str(end_cursor)
-                    }
-                )
-
-                for media in response["data"]["location"]["edge_location_to_media"]["edges"]:
-                    await q.put(media["node"])
+            for media in res["data"]["location"]["edge_location_to_media"]["edges"]:
+                await q.put(media["node"])
 
     async def print(self, media):
         """
@@ -442,15 +467,14 @@ class Piggy:
         comments = media["edge_media_to_comment"]["count"]
 
         shortcode = media["shortcode"]
-        async with self.session.get(
+        res = await self.http_request(
+            "GET",
             f"https://www.instagram.com/p/{shortcode}/",
-            params="__a=1"
-        ) as r:
-            logger.debug(f"[GET] {r.url}")
-            assert r.status == 200, f"[{r.status}] - {r.reason} - {r.text}"
+            params="__a=1",
+            response_type="json"
+        )
 
-            response = json.loads(await r.text())
-            username = response["graphql"]["shortcode_media"]["owner"]["username"]
+        username = res["graphql"]["shortcode_media"]["owner"]["username"]
 
         logger.info(
             f"""{utils.translate_ig_media_type_to_custom(mediatype).capitalize()}
@@ -481,7 +505,8 @@ class Piggy:
         # Check if the media has already been liked
         async with aiosqlite.connect("piggy/piggy.db") as db:
             row = await db.execute(
-                f"SELECT * FROM likes WHERE id = {media['id']}"
+                "SELECT * FROM likes WHERE id=?",
+                (media["id"],)
             )
             if await row.fetchone() is None:
                 logger.info("Already liked!")
@@ -520,20 +545,20 @@ class Piggy:
             "User-Agent": self.settings["connection"]["user_agent"],
             "X-CSRFToken": self.csrf_token
         }
-        async with self.session.post(
+        await self.http_request(
+            "POST",
             f"https://www.instagram.com/web/likes/{id}/like/",
             headers=headers
-        ) as r:
-            logger.debug(f"[POST] {r.url}")
-            assert r.status == 200, f"[{r.status}] - {r.reason}"
-            logger.info("Liked!")
+        )
 
-            async with aiosqlite.connect("piggy/piggy.db") as db:
-                await db.execute(
-                    "INSERT INTO likes VALUES(?,?)",
-                    id, int(time.time())
-                )
-                await db.commit()
+        async with aiosqlite.connect("piggy/piggy.db") as db:
+            await db.execute(
+                "INSERT INTO likes VALUES(?,?)",
+                id, int(time.time())
+            )
+            await db.commit()
+
+        logger.info("Liked!")
 
     async def _unlike(self, id):
         headers = {
@@ -542,17 +567,17 @@ class Piggy:
             "User-Agent": self.settings["connection"]["user_agent"],
             "X-CSRFToken": self.csrf_token
         }
-        async with self.session.post(
+        await self.http_request(
+            "POST",
             f"https://www.instagram.com/web/likes/{id}/unlike/",
             headers=headers
-        ) as r:
-            logger.debug(f"[POST] {r.url}")
-            assert r.status == 200, f"[{r.status}] - {r.reason}"
+        )
 
-            async with aiosqlite.connect("piggy/piggy.db") as db:
-                await db.execute(f"INSERT INTO likes WHERE id={id}")
-                await db.commit()
-            logger.info("Unliked!")
+        async with aiosqlite.connect("piggy/piggy.db") as db:
+            await db.execute("INSERT INTO likes WHERE id=?", (id,))
+            await db.commit()
+
+        logger.info("Unliked!")
 
     async def comment(self, media):
         """
@@ -573,7 +598,8 @@ class Piggy:
         if self.settings["comment"]["only_once"]:
             async with aiosqlite.connect("piggy/piggy.db") as db:
                 row = await db.execute(
-                    f"SELECT * FROM comments WHERE id={media['id']}"
+                    "SELECT * FROM comments WHERE id=?",
+                    (media["id"],)
                 )
                 if await row.fetchone() is None:
                     logger.info("Already commented.")
@@ -622,22 +648,21 @@ class Piggy:
         payload = {
             "comment_text": comment
         }
-        async with self.session.post(
+        await self.http_request(
+            "POST",
             f"https://www.instagram.com/web/comments/{id}/add/",
             headers=headers,
             data=payload
-        ) as r:
-            logger.debug(f"[POST] {r.url}")
-            assert r.status == 200, f"[{r.status}] - {r.reason}"
+        )
 
-            async with aiosqlite.connect("piggy/piggy.db") as db:
-                await db.execute(
-                    "INSERT INTO comments VALUES(?,?,?)",
-                    id, int(time.time()), comment
-                )
-                await db.commit()
+        async with aiosqlite.connect("piggy/piggy.db") as db:
+            await db.execute(
+                "INSERT INTO comments VALUES(?,?,?)",
+                id, int(time.time()), comment
+            )
+            await db.commit()
 
-            logger.info("Commented!")
+        logger.info("Commented!")
 
     async def follow(self, media):
         """
@@ -663,31 +688,32 @@ class Piggy:
             "User-Agent": self.settings["connection"]["user_agent"],
             "X-CSRFToken": self.csrf_token
         }
-        async with self.session.post(
+        await self.http_request(
+            "POST",
             f"https://www.instagram.com/web/friendships/{id}/follow/",
             headers=headers
-        ) as r:
-            logger.debug(f"[POST] {r.url}")
-            assert r.status == 200, f"[{r.status}] - {r.reason}"
+        )
 
-            async with aiosqlite.connect("piggy/piggy.db") as db:
-                c = await db.execute(f"SELECT * FROM users WHERE id={id}")
-                if c.rowcount:
-                    await db.execute(
-                        f"""
-                        UPDATE users SET
-                        ts_following={int(time.time())}, following={True}
-                        WHERE id={id}"""
-                    )
-                else:
-                    await db.execute(
-                        "INSERT INTO users VALUES(?,?,?,?,?)",
-                        id, None, int(time.time()), False, True
-                    )
+        async with aiosqlite.connect("piggy/piggy.db") as db:
+            c = await db.execute("SELECT * FROM users WHERE id=?", (id,))
+            if c.rowcount:
+                await db.execute(
+                    """
+                    UPDATE users SET
+                    ts_following=?, following=?
+                    WHERE id=?
+                    """,
+                    (int(time.time()), True, id)
+                )
+            else:
+                await db.execute(
+                    "INSERT INTO users VALUES(?,?,?,?,?)",
+                    (id, None, int(time.time()), False, True)
+                )
 
-                await db.commit()
+            await db.commit()
 
-            logger.info("Follow request sent!")
+        logger.info("Follow request sent!")
 
     async def unfollow(self, id):
         return
@@ -699,23 +725,23 @@ class Piggy:
             "User-Agent": self.settings["connection"]["user_agent"],
             "X-CSRFToken": self.csrf_token
         }
-        async with self.session.post(
+        await self.http_request(
+            "POST",
             f"https://www.instagram.com/web/friendships/{id}/unfollow/",
             headers=headers
-        ) as r:
-            logger.debug(f"[POST] {r.url}")
-            assert r.status == 200, f"[{r.status}] - {r.reason}"
+        )
 
-            async with aiosqlite.connect("piggy/piggy.db") as db:
-                await db.execute(
-                    f"UPDATE users SET following=false WHERE id={id}"
-                )
-                await db.commit()
+        async with aiosqlite.connect("piggy/piggy.db") as db:
+            await db.execute(
+                "UPDATE users SET following=false WHERE id=?",
+                (id,)
+            )
+            await db.commit()
 
     async def backup(self):
         while 1:
             for table_name in ["likes", "comments"]:
-                if self.settings[table]["backup"]["active"]:
+                if self.settings["table"]["backup"]["active"]:
                     async with aiosqlite.connect("piggy/piggy.db") as db:
                         rows = await db.execute(
                             f"SELECT * FROM '{table_name}'"
@@ -738,7 +764,7 @@ class Piggy:
             )
 
     async def close(self):
-        logger.info("\nClosing session...")
+        logger.info("Closing session...")
 
         # Close the http session
         await self.session.close()
@@ -760,34 +786,33 @@ class Piggy:
                 }
             )
         }
-        async with self.session.get(
+        res = await self.http_request(
+            "GET",
             f"https://www.instagram.com/graphql/query/",
             headers=headers,
-            params=payload
-        ) as r:
-            logger.debug(f"[GET] {r.url}")
-            assert r.status == 200, f"[{r.status}] - {r.reason}"
-            print(await r.json())
+            params=payload,
+            response_type="json"
+        )
 
-    @staticmethod  # ?
-    async def getUserByUsername(self, username):
-        async with self.session.get(
+        logging.info(res)
+
+    async def get_user_by_username(self, username):
+        res = await self.http_request(
+            "GET",
             f"https://www.instagram.com/{username}/",
             params="__a:1"
-        ) as r:
-            logger.debug(f"[GET] {r.url}")
-            assert r.status == 200, f"[{r.status}] - {r.reason}"
+        )
 
-            return json.loads(
+        return json.loads(
+            regex.findall(
+                r"<script[^>]*>window._sharedData = (.*?)</script>",
                 regex.findall(
-                    r"<script[^>]*>window._sharedData = (.*?)</script>",
-                    regex.findall(
-                        r"<body[^>]*>(.*)</body>",
-                        await r.text(),
-                        flags=regex.DOTALL
-                    )[0],
+                    r"<body[^>]*>(.*)</body>",
+                    res,
                     flags=regex.DOTALL
-                )[0][:-1])["entry_data"]["ProfilePage"][0]["graphql"]["user"]
+                )[0],
+                flags=regex.DOTALL
+            )[0][:-1])["entry_data"]["ProfilePage"][0]["graphql"]["user"]
 
 # -----------------------------------------------------------------------------
     async def download(self, media):
@@ -795,7 +820,7 @@ class Piggy:
         url = media["display_url"]
         format = regex.findall(r".([a-zA-Z]+)$", url)[0]
 
-        if media["__typename"] != "GraphImage" or await self.picAlreadySaved(id):
+        if media["__typename"] != "GraphImage" or await self.pic_already_saved(id):
             return
 
         height = media["dimensions"]["height"]
@@ -806,16 +831,16 @@ class Piggy:
             tags = []
             pass
         else:
-            if await self.downloadPic(url, id, format):
+            if await self.download_pic(url, id, format):
                 logger.info(f"Caption: {caption}")
                 tags = regex.findall(r"#([\p{L}0-9_]+)", caption)
                 logger.info(f"Tags: {tags}")
             else:
                 return
 
-        await self.saveToDatabase(id, type, height, width, url, tags)
+        await self.save_to_database(id, type, height, width, url, tags)
 
-    async def downloadPic(self, url, id, format):
+    async def download_pic(self, url, id, format):
         logger.info(f"Downloading {id}")
         async with aiohttp.ClientSession() as session:
             try:
@@ -833,17 +858,20 @@ class Piggy:
             except TimeoutError:
                 return False
 
-    async def picAlreadySaved(self, id):
+    async def pic_already_saved(self, id):
         logger.debug("Checking database.")
         async with aiosqlite.connect("piggy/piggy.db") as db:
-            row = await db.execute(f"SELECT * FROM pics WHERE id = {id}")
+            row = await db.execute(
+                "SELECT * FROM pics WHERE id=?",
+                (id,)
+            )
 
             if await row.fetchone() is None:
                 return False
             else:
                 return True
 
-    async def saveToDatabase(self, id, type, height, width, url, tags):
+    async def save_to_database(self, id, type, height, width, url, tags):
         tags = json.dumps(tags)
         async with aiosqlite.connect("piggy/piggy.db") as db:
             await db.execute(
