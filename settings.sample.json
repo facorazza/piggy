@@ -1,63 +1,63 @@
 {
-  "user":{
-    "username":"YOUR_EMAIL",  # It can be either your email or your username (your phone number should work as well)
-    "password":"YOUR_PASSWD"
+  "user": {
+    "username": "YOUR_EMAIL",  # It can be either your email or your username (your phone number should work as well)
+    "password": "YOUR_PASSWD"
   },
-  "backup":{
-    "every":"5m", # Take a backup of all active backups every 5 minutes. Available units: s-seconds, m-minutes, h-hours, d-days
-    "format":"csv" # The backup files will be exported as csv. Supported formats: csv, json.
+  "backup": {
+    "every": "5m", # Take a backup of all active backups every 5 minutes. Available units: s-seconds, m-minutes, h-hours, d-days
+    "format": "csv" # The backup files will be exported as csv. Supported formats: csv, json.
   },
-  "followers":{
-    "backup":{
-      "active":false
+  "followers": {
+    "backup": {
+      "active": false
     }
   },
-  "following":{
-    "unfollow_non_followers":false,
-    "backup":{
-      "active":false
+  "following": {
+    "unfollow_non_followers": false,
+    "backup": {
+      "active": false
     }
   },
-  "like":{
-    "rate":100, # Percentage of posts that will be roughly be liked
-    "media_type":[  # Select the type of media to like
+  "like": {
+    "rate": 100, # Percentage of posts that will be roughly be liked
+    "media_type": [  # Select the type of media to like
       "photo",
       "album",
       "video"
     ],
-    "num_of_likes":{  # Like only if the number of likes is greater or equal to "min" and less than "max"
-      "min":0,
-      "max":1e12
+    "num_of_likes": {  # Like only if the number of likes is greater or equal to "min" and less than "max"
+      "min": 0,
+      "max": 1e12
     },
-    "num_of_comments":{ # Like only if the number of comments is greater or equal to "min" and less than "max"
-      "min":0,
-      "max":1e12
+    "num_of_comments": { # Like only if the number of comments is greater or equal to "min" and less than "max"
+      "min": 0,
+      "max": 1e12
     }
   },
-  "comment":{
-    "rate":100, # Percentage of posts that will be roughly be commented
-    "media_type":[  # Select the type of media to comment
+  "comment": {
+    "rate": 100, # Percentage of posts that will be roughly be commented
+    "media_type": [  # Select the type of media to comment
       "photo",
       "album",
       "video"
     ],
-    "only_liked_media":true, # Comment only liked media
-    "only_once":true, # Comment an element only once
-    "num_of_likes":{  # Comment only if the number of likes is greater or equal to "min" and less than "max"
-      "min":0,
-      "max":1e12
+    "only_liked_media": true, # Comment only liked media
+    "only_once": true, # Comment an element only once
+    "num_of_likes": {  # Comment only if the number of likes is greater or equal to "min" and less than "max"
+      "min": 0,
+      "max": 1e12
     },
-    "num_of_comments":{ # Comment only if the number of comments is greater or equal to "min" and less than "max"
-      "min":0,
-      "max":1e12
+    "num_of_comments": { # Comment only if the number of comments is greater or equal to "min" and less than "max"
+      "min": 0,
+      "max": 1e12
     }
   },
-  "follow":{
-    "rate":100#, # Percentage of users that will be roughly followed
-    #"private_users":false # If true, send requests to users with private accounts
+  "follow": {
+    "rate": 100#, # Percentage of users that will be roughly followed
+    #"private_users": false # If true, send requests to users with private accounts
   },
-  "connection":{
-    "user_agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10; rv:60.0) Gecko/20100101 Firefox/60.0",
-    "timeout":60
+  "connection": {
+    "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10; rv:60.0) Gecko/20100101 Firefox/60.0",
+    "timeout": 60
   }
 }
