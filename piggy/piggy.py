@@ -40,6 +40,8 @@ class Piggy:
         self, method, url,
         headers=None, params=None, data=None, response_type="text"
     ):
+        await asyncio.sleep(self.settings['connection']["wait_time"])
+
         if method == "GET":
             r = await self.session.get(
                 url,
@@ -59,16 +61,40 @@ class Piggy:
 
         logger.debug(f"Status code: {r.status} {r.reason}")
 
-        if response_type == "text":
-            res = await r.text()
-            logger.debug(res)
-            return res
-        elif response_type == "json":
-            res = await r.json()
-            logger.debug(res)
-            return res
+        if r.status == 200:
+            # Successfull request: decrease retry time
+            if self.settings['connection']["wait_time"] > 0:
+                self.settings['connection']["wait_time"] -= 1
+
+            if response_type == "text":
+                res = await r.text()
+                logger.debug(res)
+                return res
+            elif response_type == "json":
+                res = await r.json()
+                logger.debug(res)
+                return res
+            else:
+                raise ValueError(f"Invalid response type: {response_type}")
+        elif r.status == 429:
+            # Unsuccessfull request: increase retry time
+            self.settings['connection']["wait_time"] += 1
+            logger.warning(
+                f"""Too many requests! Retrying in {self.settings['connection']['wait_time']} seconds."""
+            )
+            return await self.http_request(
+                method,
+                url,
+                headers=headers,
+                params=params,
+                data=data,
+                response_type=response_type
+            )
         else:
-            raise ValueError(f"Invalid response type: {response_type}")
+            logger.error(f"Response status: {r.status}")
+            logger.error(f"Response headers: {r.headers}")
+            logger.error(await r.text())
+            raise ValueError(f"Response error: {r.status}")
 
     async def setup(self, settings_path="settings.json"):
         logger.info("Loading settings...")
@@ -477,8 +503,7 @@ class Piggy:
         username = res["graphql"]["shortcode_media"]["owner"]["username"]
 
         logger.info(
-            f"""{utils.translate_ig_media_type_to_custom(mediatype).capitalize()}
-            by {username}\nLikes: {likes}, Comments: {comments}"""
+            f"{utils.translate_ig_media_type_to_custom(mediatype).capitalize()} by {username}\nLikes: {likes}, Comments: {comments}"
         )
         try:
             caption = media["edge_media_to_caption"]["edges"][0]["node"]["text"]
@@ -794,7 +819,7 @@ class Piggy:
             response_type="json"
         )
 
-        logging.info(res)
+        logger.info(res)
 
     async def get_user_by_username(self, username):
         res = await self.http_request(
