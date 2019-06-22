@@ -549,7 +549,7 @@ class Piggy:
                 "SELECT * FROM likes WHERE id=?",
                 (media["id"],)
             )
-            if await row.fetchone() is None:
+            if await row.fetchone():
                 logger.info("Already liked!")
                 return
 
@@ -564,22 +564,24 @@ class Piggy:
             pass
         else:
             if not mediatype in utils.translate_custom_media_type_to_ig(self.settings["like"]["media_type"]):
+                logger.info("Wrong media type. Not liked!")
                 return
 
         likes = media["edge_liked_by"]["count"]
         if likes < self.settings["like"]["num_of_likes"]["min"] or likes >= self.settings["like"]["num_of_likes"]["max"]:
+            logger.info("Too many or too few likes. Not liked!")
             return
         comments = media["edge_media_to_comment"]["count"]
         if comments < self.settings["like"]["num_of_comments"]["min"] or comments >= self.settings["like"]["num_of_comments"]["max"]:
+            logger.info("Too many or too few comments. Not liked!")
             return
 
-        if self.settings["like"]["rate"] / 100 <= random():
+        if self.settings["like"]["rate"] / 100 > random():
             await self._like(media["id"])
         else:
             logger.info("Not liked!")
 
     async def _like(self, id):
-        #if
         headers = {
             "DNT": "1",
             "Host": "www.instagram.com",
@@ -595,7 +597,7 @@ class Piggy:
         async with aiosqlite.connect("piggy/piggy.db") as db:
             await db.execute(
                 "INSERT INTO likes VALUES(?,?)",
-                id, int(time.time())
+                (id, int(time.time()))
             )
             await db.commit()
 
