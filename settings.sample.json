@@ -58,6 +58,7 @@
   },
   "connection": {
     "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10; rv:60.0) Gecko/20100101 Firefox/60.0",
-    "timeout": 60
+    "timeout": 60,
+    "wait_time": 0 # When a 429 [Too many requests] is received the wait time is increased by 1s and decreased by 1s when a 200 [OK] is received
   }
 }
