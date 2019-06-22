@@ -129,81 +129,69 @@ class Piggy:
         logger.info("Checking database...")
         # Connect to the local database and look for the table names
         async with aiosqlite.connect("piggy/piggy.db") as db:
-            c = await db.execute(
-                "SELECT name FROM sqlite_master WHERE type='table'"
+            logger.debug("Checking table: pics")
+            await db.execute(
+                """
+                CREATE TABLE IF NOT EXISTS pics (
+                    id INT,
+                    height INT,
+                    width INT,
+                    url TEXT,
+                    tags TEXT
+                )
+                """
             )
-            rows = await c.fetchall()
 
-            # Save table names into tables[]
-            tables = []
-            for row in rows:
-                tables.append(row[0])  # to list comprehension
-
-            # Check if needed table is already present in the database
-            # otherwise create it
-
-            if "pics" not in tables:
-                logger.debug("Creating new table: pics")
-                c = await db.execute(
-                    """
-                    CREATE TABLE pics (
-                        id INT,
-                        height INT,
-                        width INT,
-                        url TEXT,
-                        tags TEXT
-                    )
-                    """
+            logger.debug("Checking table: users")
+            await db.execute(
+                """
+                CREATE TABLE IF NOT EXISTS users (
+                    id TEXT,
+                    username TEXT,
+                    ts_follower INTEGER,
+                    ts_following INTEGER,
+                    follower BOOL,
+                    following BOOL
                 )
-                await db.commit()
+                """
+            )
 
-            if "users" not in tables:
-                logger.debug("Creating new table: users")
-                c = await db.execute(
-                    """
-                    CREATE TABLE users (
-                        id TEXT,
-                        username TEXT,
-                        ts_follower INTEGER,
-                        ts_following INTEGER,
-                        follower BOOL,
-                        following BOOL
-                    )"""
+            logger.debug("Checking table: likes")
+            await db.execute(
+                """
+                CREATE TABLE IF NOT EXISTS likes (
+                    id INTEGER,
+                    ts INTEGER
                 )
-                await db.commit()
+                """
+            )
 
-            if "likes" not in tables:
-                logger.debug("Creating new table: likes")
-                c = await db.execute(
-                    "CREATE TABLE likes (id INTEGER, ts INTEGER)"
+            logger.debug("Checking table: comments")
+            await db.execute(
+                """
+                CREATE TABLE IF NOT EXISTS comments (
+                    id INTEGER,
+                    ts INTEGER,
+                    comment TEXT
                 )
-                await db.commit()
+                """
+            )
 
-            if "comments" not in tables:
-                logger.debug("Creating new table: comments")
-                c = await db.execute(
-                    """CREATE TABLE comments (
-                        id INTEGER,
-                        ts INTEGER,
-                        comment TEXT
-                    )"""
-                )
-                await db.commit()
+            logger.info("Updating followers and following lists.")
+            await db.execute("UPDATE users SET follower=0, following=1")
 
-            followers = await self.followers()
-            following = await self.following()
-
-            c = await db.execute("UPDATE users SET follower=0, following=1")
-
-            for username in followers:
-                c = await db.execute(
-                    f"UPDATE users SET follower=0 WHERE username='{username}'"
+            for username in await self.followers():
+                await db.execute(
+                    "UPDATE users SET follower=0 WHERE username=?",
+                    (username,)
                 )
 
-            for username in following:
-                c = await db.execute(
-                    f"UPDATE users SET following=1 WHERE username='{username}'"
+            for username in await self.following():
+                await db.execute(
+                    "UPDATE users SET following=1 WHERE username=?",
+                    (username,)
                 )
+
             await db.commit()
 
     async def followers(self, username=None):
