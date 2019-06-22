@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="piggy",
-    version="0.0.2",
+    version="0.0.3",
     author="Federico A. Corazza",
     author_email="federico.corazza@live.it",
     description="Piggy is an asynchronous Python library which helps managing Instagram accounts and facilitates their growth.",
@@ -13,7 +13,13 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/Imperator26/piggy",
     packages=setuptools.find_packages(),
-    install_requires=['requests', 'asyncio', 'aiohttp', 'aiosqlite', 'aiofiles', 'regex'],
+    python_requires=">=3.6",
+    install_requires=[
+        "aiohttp==3.5.4",
+        "aiosqlite==0.10.0",
+        "aiofiles==0.4.0",
+        "regex==2019.06.08"
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

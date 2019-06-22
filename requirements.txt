@@ -1,6 +1,0 @@
-requests
-asyncio
-aiohttp
-aiosqlite
-aiofiles
-regex
