@@ -10,6 +10,8 @@ import aiosqlite
 import aiofiles
 import regex
 
+from aiohttp.client_exceptions import ClientConnectorError
+
 from piggy import utils
 
 
@@ -42,46 +44,27 @@ class Piggy:
     ):
         await asyncio.sleep(self.settings['connection']["wait_time"])
 
-        if method == "GET":
-            r = await self.session.get(
-                url,
-                headers=headers,
-                params=params
-            )
-            logger.debug(f"[GET] {r.url}")
-        elif method == "POST":
-            r = await self.session.post(
-                url,
-                headers=headers,
-                data=data
-            )
-            logger.debug(f"[POST] {r.url}")
-        else:
-            raise ValueError(f"Invalid HTTP method: {method}")
-
-        logger.debug(f"Status code: {r.status} {r.reason}")
-
-        if r.status == 200:
-            # Successfull request: decrease retry time
-            if self.settings['connection']["wait_time"] > 0:
-                self.settings['connection']["wait_time"] -= 1
-
-            if response_type == "text":
-                res = await r.text()
-                logger.debug(res)
-                return res
-            elif response_type == "json":
-                res = await r.json()
-                logger.debug(res)
-                return res
+        try:
+            if method == "GET":
+                r = await self.session.get(
+                    url,
+                    headers=headers,
+                    params=params
+                )
+                logger.debug(f"[GET] {r.url}")
+            elif method == "POST":
+                r = await self.session.post(
+                    url,
+                    headers=headers,
+                    data=data
+                )
+                logger.debug(f"[POST] {r.url}")
             else:
-                raise ValueError(f"Invalid response type: {response_type}")
-        elif r.status == 429:
-            # Unsuccessfull request: increase retry time
-            self.settings['connection']["wait_time"] += 1
-            logger.warning(
-                f"""Too many requests! Retrying in {self.settings['connection']['wait_time']} seconds."""
-            )
+                raise ValueError(f"Invalid HTTP method: {method}")
+
+        except ClientConnectorError:
+            logger.error("Could not reach the server. Retrying in 30 seconds.")
+            await asyncio.sleep(30)
             return await self.http_request(
                 method,
                 url,
@@ -90,11 +73,44 @@ class Piggy:
                 data=data,
                 response_type=response_type
             )
+
         else:
-            logger.error(f"Response status: {r.status}")
-            logger.error(f"Response headers: {r.headers}")
-            logger.error(await r.text())
-            raise ValueError(f"Response error: {r.status}")
+            logger.debug(f"Status code: {r.status} {r.reason}")
+
+            if r.status == 200:
+                # Successfull request: decrease retry time
+                if self.settings['connection']["wait_time"] > 0:
+                    self.settings['connection']["wait_time"] -= 1
+
+                if response_type == "text":
+                    res = await r.text()
+                    logger.debug(res)
+                    return res
+                elif response_type == "json":
+                    res = await r.json()
+                    logger.debug(res)
+                    return res
+                else:
+                    raise ValueError(f"Invalid response type: {response_type}")
+            elif r.status == 429:
+                # Unsuccessfull request: increase retry time
+                self.settings['connection']["wait_time"] += 1
+                logger.warning(
+                    f"""Too many requests! Retrying in {self.settings['connection']['wait_time']} seconds."""
+                )
+                return await self.http_request(
+                    method,
+                    url,
+                    headers=headers,
+                    params=params,
+                    data=data,
+                    response_type=response_type
+                )
+            else:
+                logger.error(f"Response status: {r.status}")
+                logger.error(f"Response headers: {r.headers}")
+                logger.error(await r.text())
+                raise ValueError(f"Response error: {r.status}")
 
     async def setup(self, settings_path="settings.json"):
         logger.info("Loading settings...")
