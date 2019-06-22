@@ -100,8 +100,9 @@ class Piggy:
         ) as r:
             logger.debug(f"[POST] {r.url}")
             response = await r.json()
+            logger.debug(response)
 
-        if response["status"] == "ok":
+        if response["authenticated"]:
             logger.info("Logged in!")
             self.id = response["userId"]
 
@@ -114,7 +115,7 @@ class Piggy:
                 data=payload
             ) as r:
                 logger.debug(f"[POST] {r.url}")
-                print(r.text)
+                logger.error(r.text)
         else:
             logger.error("Couldn't log in.")
             logger.info(response)
