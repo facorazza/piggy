@@ -10,7 +10,6 @@ async def main(pig):
 #       await pig.like(media)
 #       await pig.comment(media)
 #       await pig.follow(media)
-#        await pig.my()
 
 # ==============================================================================
 

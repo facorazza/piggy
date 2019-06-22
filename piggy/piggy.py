@@ -794,33 +794,6 @@ class Piggy:
         # Close the http session
         await self.session.close()
 
-    async def my(self):
-        headers = {
-            "DNT": "1",
-            "Host": "www.instagram.com",
-            "User-Agent": self.settings["connection"]["user_agent"],
-            "X-CSRFToken": self.csrf_token
-        }
-        payload = {
-            "query_hash": "292c781d60c07571d58d9ef7808888ef",
-            "variables": json.dumps(
-                {
-                    "shortcode": "BqM8huHhvrc",
-                    "include_reel": False,
-                    "include_logged_out": False
-                }
-            )
-        }
-        res = await self.http_request(
-            "GET",
-            f"https://www.instagram.com/graphql/query/",
-            headers=headers,
-            params=payload,
-            response_type="json"
-        )
-
-        logger.info(res)
-
     async def get_user_by_username(self, username):
         res = await self.http_request(
             "GET",
