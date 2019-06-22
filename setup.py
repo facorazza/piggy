@@ -15,6 +15,8 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     python_requires=">=3.6",
     install_requires=[
+        "cchardet==2.1.4",
+        "aiodns==2.0.0",
         "aiohttp==3.5.4",
         "aiosqlite==0.10.0",
         "aiofiles==0.4.0",
