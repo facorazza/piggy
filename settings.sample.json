@@ -4,6 +4,9 @@
     "password": "YOUR_PASSWD"
   },
   "backup": {
+    "users": true,
+    "likes": true,
+    "comments": true,
     "every": "5m", # Take a backup of all active backups every 5 minutes. Available units: s-seconds, m-minutes, h-hours, d-days
     "format": "csv" # The backup files will be exported as csv. Supported formats: csv, json.
   },
@@ -14,9 +17,6 @@
   },
   "following": {
     "unfollow_non_followers": false,
-    "backup": {
-      "active": false
-    }
   },
   "like": {
     "rate": 100, # Percentage of posts that will be roughly be liked

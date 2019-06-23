@@ -783,26 +783,25 @@ class Piggy:
 
     async def backup(self):
         while 1:
-            for table_name in ["likes", "comments"]:
-                if self.settings["table"]["backup"]["active"]:
+            for table_name in ["users", "likes", "comments"]:
+                if self.settings["backup"][table_name]:
                     async with aiosqlite.connect("piggy/piggy.db") as db:
                         rows = await db.execute(
                             f"SELECT * FROM '{table_name}'"
                         )
+                        header = [i[0] for i in rows.description]
                         rows = await rows.fetchall()
 
-                    header = [i[0] for i in rows.description]
                     if self.settings["backup"]["format"] == "csv":
-                        utils.to_csv(table_name, header, rows)
+                        await utils.to_csv(table_name, header, rows)
                     elif self.settings["backup"]["format"] == "json":
-                        utils.to_json(table_name, header, rows)
+                        await utils.to_json(table_name, header, rows)
                     else:
                         logger.warning(
-                            f"""Unsupported file format
-                            \"{self.settings['backup']['format']}.\""""
+                            f"""Unsupported file format: {self.settings['backup']['format']}."""
                         )
 
-            asyncio.sleep(
+            await asyncio.sleep(
                 utils.interval_in_seconds(self.settings["backup"]["every"])
             )
 
