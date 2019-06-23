@@ -51,7 +51,7 @@ def interval_in_seconds(interval):
     elif unit == "d":
         return value * 86400
     else:
-        raise ValueError(f"Invalid unit \"{unit}\".")
+        raise ValueError(f"Invalid unit: {unit}")
 
 
 async def to_csv(filename, header, rows):
