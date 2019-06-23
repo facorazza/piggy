@@ -519,7 +519,7 @@ class Piggy:
         username = res["graphql"]["shortcode_media"]["owner"]["username"]
 
         logger.info(
-            f"{utils.translate_ig_media_type_to_custom(mediatype).capitalize()} by {username}\nLikes: {likes}, Comments: {comments}"
+            f"{utils.translate_ig_media_type_to_custom(mediatype).capitalize()} by {username}\n❤️ {likes}, 💬 {comments}"
         )
         try:
             caption = media["edge_media_to_caption"]["edges"][0]["node"]["text"]
@@ -527,9 +527,9 @@ class Piggy:
             pass
         else:
             if len(caption) > 100:
-                logger.info(f"Caption: {caption:.100}...")
+                logger.info(f"{caption:.100}...")
             else:
-                logger.info(f"Caption: {caption}")
+                logger.info(f"{caption}")
 
     async def like(self, media):
         """
