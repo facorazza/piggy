@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="piggy",
-    version="0.0.7",
+    version="0.0.8",
     author="Federico A. Corazza",
     author_email="federico.corazza@live.it",
     description="Piggy is an asynchronous Python library which helps managing Instagram accounts and facilitates their growth.",

@@ -10,7 +10,6 @@ async def main(pig):
 #       await pig.like(media)
 #       await pig.comment(media)
 #       await pig.follow(media)
-        await pig.backup()
 
 # ==============================================================================
 
@@ -23,6 +22,7 @@ pig = Piggy()
 try:
     loop.run_until_complete(pig.setup())
     loop.run_until_complete(pig.login())
+    loop.run_until_complete(pig.backup())
 
     loop.run_until_complete(main(pig))
 
