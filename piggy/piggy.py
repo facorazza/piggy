@@ -719,8 +719,8 @@ class Piggy:
             None
         """
 
-        if random() <= self.settings["follow"]["rate"] / 100:
-            await self._follow(media["id"])
+        if self.settings["follow"]["rate"] / 100 > random():
+            await self._follow(media["owner"]["id"])
         else:
             logger.info("Not followed!")
 
