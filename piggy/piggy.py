@@ -276,7 +276,7 @@ class Piggy:
         if username is None:
             id = self.id
         else:
-            user = await self.get_user_by_usernameUsername(username)
+            user = await self.get_user_by_username(username)
             id = user["graphql"]["user"]["id"]
 
         params = {
@@ -308,7 +308,7 @@ class Piggy:
         if username is None:
             id = self.id
         else:
-            user = await self.get_user_by_usernameUsername(username)
+            user = await self.get_user_by_username(username)
             id = user["graphql"]["user"]["id"]
 
         params = {
