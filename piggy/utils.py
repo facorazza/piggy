@@ -39,7 +39,7 @@ def cookies_dict(cookie_jar):
 
 def interval_in_seconds(interval):
     exploded_interval = regex.findall(r"([0-9]+)([a-z])", interval)[0]
-    value = float(exploded_interval[0])
+    value = int(exploded_interval[0])
     unit = exploded_interval[1]
 
     if unit == "s":

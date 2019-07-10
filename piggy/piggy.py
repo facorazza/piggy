@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 ch = logging.StreamHandler()
-fh = logging.FileHandler("piggy/piggy.log")
+fh = logging.FileHandler("./piggy.log")
 
 ch.setLevel(logging.INFO)
 fh.setLevel(logging.DEBUG)
@@ -35,8 +35,8 @@ logger.addHandler(fh)
 
 
 class Piggy:
-    def __init__(self):
-        return
+    def __init__(self, loop):
+        self.loop = loop
 
     async def http_request(
         self, method, url,
@@ -204,7 +204,7 @@ class Piggy:
     async def _init_database(self):
         logger.info("Checking database...")
         # Connect to the local database and look for the table names
-        async with aiosqlite.connect("piggy/piggy.db") as db:
+        async with aiosqlite.connect("./piggy.db") as db:
             logger.debug("Checking table: pics")
             await db.execute(
                 """
@@ -544,7 +544,7 @@ class Piggy:
         """
 
         # Check if the media has already been liked
-        async with aiosqlite.connect("piggy/piggy.db") as db:
+        async with aiosqlite.connect("./piggy.db") as db:
             row = await db.execute(
                 "SELECT * FROM likes WHERE id=?",
                 (media["id"],)
@@ -594,7 +594,7 @@ class Piggy:
             headers=headers
         )
 
-        async with aiosqlite.connect("piggy/piggy.db") as db:
+        async with aiosqlite.connect("./piggy.db") as db:
             await db.execute(
                 "INSERT INTO likes VALUES(?,?)",
                 (id, int(time.time()))
@@ -616,7 +616,7 @@ class Piggy:
             headers=headers
         )
 
-        async with aiosqlite.connect("piggy/piggy.db") as db:
+        async with aiosqlite.connect("./piggy.db") as db:
             await db.execute("INSERT INTO likes WHERE id=?", (id,))
             await db.commit()
 
@@ -639,7 +639,7 @@ class Piggy:
             return
 
         if self.settings["comment"]["only_once"]:
-            async with aiosqlite.connect("piggy/piggy.db") as db:
+            async with aiosqlite.connect("./piggy.db") as db:
                 row = await db.execute(
                     "SELECT * FROM comments WHERE id=?",
                     (media["id"],)
@@ -677,7 +677,7 @@ class Piggy:
                 comment = self.video_comments_list[
                     randint(0, len(self.video_comments_list)-1)
                 ]
-            await self._comment(media["id"], )
+            await self._comment(media["id"], comment)
         else:
             logger.info("Not commented!")
 
@@ -698,14 +698,14 @@ class Piggy:
             data=payload
         )
 
-        async with aiosqlite.connect("piggy/piggy.db") as db:
+        async with aiosqlite.connect("./piggy.db") as db:
             await db.execute(
                 "INSERT INTO comments VALUES(?,?,?)",
-                id, int(time.time()), comment
+                (id, int(time.time()), comment)
             )
             await db.commit()
 
-        logger.info("Commented!")
+        logger.info("Comment posted!")
 
     async def follow(self, media):
         """
@@ -737,7 +737,7 @@ class Piggy:
             headers=headers
         )
 
-        async with aiosqlite.connect("piggy/piggy.db") as db:
+        async with aiosqlite.connect("./piggy.db") as db:
             c = await db.execute("SELECT * FROM users WHERE id=?", (id,))
             if c.rowcount:
                 await db.execute(
@@ -774,7 +774,7 @@ class Piggy:
             headers=headers
         )
 
-        async with aiosqlite.connect("piggy/piggy.db") as db:
+        async with aiosqlite.connect("./piggy.db") as db:
             await db.execute(
                 "UPDATE users SET following=false WHERE id=?",
                 (id,)
@@ -783,9 +783,10 @@ class Piggy:
 
     async def backup(self):
         while 1:
+            logger.info("Backing up database...")
             for table_name in ["users", "likes", "comments"]:
                 if self.settings["backup"][table_name]:
-                    async with aiosqlite.connect("piggy/piggy.db") as db:
+                    async with aiosqlite.connect("./piggy.db") as db:
                         rows = await db.execute(
                             f"SELECT * FROM '{table_name}'"
                         )
@@ -801,12 +802,12 @@ class Piggy:
                             f"""Unsupported file format: {self.settings['backup']['format']}."""
                         )
 
-            await asyncio.sleep(
-                utils.interval_in_seconds(self.settings["backup"]["every"])
-            )
+                await asyncio.sleep(
+                    utils.interval_in_seconds(self.settings["backup"]["every"])
+                )
 
     async def close(self):
-        logger.info("Closing session...")
+        logger.info("\nClosing session...")
 
         # Close the http session
         await self.session.close()
@@ -875,7 +876,7 @@ class Piggy:
 
     async def pic_already_saved(self, id):
         logger.debug("Checking database.")
-        async with aiosqlite.connect("piggy/piggy.db") as db:
+        async with aiosqlite.connect("./piggy.db") as db:
             row = await db.execute(
                 "SELECT * FROM pics WHERE id=?",
                 (id,)
@@ -888,7 +889,7 @@ class Piggy:
 
     async def save_to_database(self, id, type, height, width, url, tags):
         tags = json.dumps(tags)
-        async with aiosqlite.connect("piggy/piggy.db") as db:
+        async with aiosqlite.connect("./piggy.db") as db:
             await db.execute(
                 "INSERT INTO pics VALUES(?,?,?,?,?)",
                 (id, height, width, url, tags)
