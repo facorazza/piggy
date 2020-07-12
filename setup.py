@@ -11,7 +11,7 @@ setuptools.setup(
     description="Piggy is an asynchronous Python library which helps managing Instagram accounts and facilitates their growth.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/Imperator26/piggy",
+    url="https://github.com/facorazza/piggy",
     packages=setuptools.find_packages(),
     python_requires=">=3.6",
     install_requires=[
