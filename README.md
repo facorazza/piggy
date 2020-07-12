@@ -1,6 +1,6 @@
 # 🐷 P[Ig]*g*y
 
-[![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/Imperator26/piggy)
+[![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/facorazza/piggy)
 ![](https://img.shields.io/badge/Python-%E2%89%A5%203.6-yellow.svg)
 ![](https://img.shields.io/badge/-asynchronous-blue.svg)
 
@@ -15,7 +15,7 @@ Piggy is an asynchronous Python library which helps managing Instagram accounts 
 ## Installation
 Piggy is easy to install. Fire up your terminal and copy these lines:
 ```
-git clone https://github.com/Imperator26/piggy
+git clone https://github.com/facorazza/piggy
 cd piggy
 python3 setup.py install
 ```
