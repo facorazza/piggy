@@ -17,7 +17,7 @@ setuptools.setup(
     install_requires=[
         "cchardet==2.1.4",
         "aiodns==2.0.0",
-        "aiohttp==3.7.4",
+        "aiohttp==3.13.4",
         "aiosqlite==0.10.0",
         "aiofiles==0.4.0",
         "regex==2019.06.08"
